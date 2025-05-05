@@ -103,9 +103,11 @@ jobs:
 
           mkdir build
           cd build
-          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} || ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }}
+          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} ||
+            ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} ||
+            ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }}
 
-          cp ./macos-install/libexec/vlc/vlc-cache-gen .
+          cp "$(find . -iname 'vlc-cache-gen' -not -path './bin/*')" .
 
           zip -r "vlc-macos-${{ matrix.arch }}.zip" VLC.app vlc-cache-gen
 
