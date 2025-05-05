@@ -1,0 +1,158 @@
+name: build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+
+# =============================
+#       Create release
+# =============================
+
+# Create release, but only if it's triggered by tag push.
+# On pull requests/commits push, this job will always complete.
+
+  maybe-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone project
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/checkout@v3
+
+      - name: Build changelog
+        id: build_changelog
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: simplex-chat/release-changelog-builder-action@v5
+        with:
+          configuration: .github/changelog_conf.json
+          failOnError: true
+          ignorePreReleases: true
+          commitMode: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: simplex-chat/action-gh-release@v2
+        with:
+          body: ${{ steps.build_changelog.outputs.changelog }}
+          prerelease: true
+          files: |
+            COPYING
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# =========================
+#        Linux Build
+# =========================
+
+  build-linux:
+    name: "ubuntu-${{ matrix.os }}"
+    needs: maybe-release
+    runs-on: ubuntu-${{ matrix.os }}
+    if: false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: 22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup swap
+        uses: ./.github/actions/swap
+        with:
+          swap-size-gb: 30
+
+# =========================
+#        MacOS Build
+# =========================
+
+  build-macos:
+    name: "${{ matrix.os }}"
+    needs: maybe-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            brew: /opt/homebrew
+            arch: aarch64
+          - os: macos-13
+            brew: /usr/local
+            arch: x86_64
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install tools
+        shell: bash
+        run: |
+          brew install coreutils openjdk@11
+          sudo ln -sfn ${{ matrix.brew }}/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+
+      - name: Build
+        shell: bash
+        run: |
+          export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+
+          mkdir build
+          cd build
+          ../extras/package/macosx/build.sh -c || ../extras/package/macosx/build.sh
+
+          cp ./bin/vlc-cache-gen .
+
+          zip -r "vlc-macos-${{ matrix.arch }}.zip" VLC.app vlc-cache-gen
+
+      - name: Upload binaries
+        uses: simplex-chat/action-gh-release@v2
+        with:
+          append_body: true
+          fail_on_unmatched_files: true
+          files: vlc-macos-${{ matrix.arch }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# =========================
+#      Windows Build
+# =========================
+
+  build-windows:
+    name: "${{ matrix.os }}"
+    needs: maybe-release
+    runs-on: ${{ matrix.os }}
+    if: false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure pagefile (Windows)
+        uses: simplex-chat/configure-pagefile-action@v1.4
+        with:
+          minimum-size: 16GB
+          maximum-size: 16GB
+          disk-root: "C:"
+  
+      - name: 'Setup MSYS2'
+        uses: simplex-chat/setup-msys2@v2
+        with:
+          msystem: ucrt64
+          update: true
+          install: >-
+            git
+            perl
+            make
+          pacboy: >-
+            toolchain:p
+            cmake:p
+
