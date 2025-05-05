@@ -8,10 +8,10 @@ info()
     echo "[${green}build${normal}] $1"
 }
 
+ARCH="x86_64"
 MINIMAL_OSX_VERSION="10.13"
 OSX_KERNELVERSION=`uname -r | cut -d. -f1`
 BUILD_ARCH=`uname -m | cut -d. -f1`
-ARCH="$BUILD_ARCH"
 SDKROOT=$(xcrun --show-sdk-path)
 VLCBUILDDIR=""
 
