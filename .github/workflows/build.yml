@@ -103,7 +103,7 @@ jobs:
 
           mkdir build
           cd build
-          ../extras/package/macosx/build.sh -c || ../extras/package/macosx/build.sh
+          ../extras/package/macosx/build.sh -c || ../extras/package/macosx/build.sh -c
 
           cp ./bin/vlc-cache-gen .
 
