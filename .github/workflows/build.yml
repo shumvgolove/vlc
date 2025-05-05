@@ -103,7 +103,7 @@ jobs:
 
           mkdir build
           cd build
-          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} || ../extras/package/macosx/build.sh -c ${{ matrix.arch }}
+          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} || ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }}
 
           cp ./macos-install/libexec/vlc/vlc-cache-gen .
 
