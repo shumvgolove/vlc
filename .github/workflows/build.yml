@@ -103,7 +103,7 @@ jobs:
 
           mkdir build
           cd build
-          ../extras/package/macosx/build.sh -c || ../extras/package/macosx/build.sh -c
+          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} || ../extras/package/macosx/build.sh -c ${{ matrix.arch }}
 
           cp ./bin/vlc-cache-gen .
 
@@ -114,7 +114,7 @@ jobs:
         with:
           append_body: true
           fail_on_unmatched_files: true
-          files: vlc-macos-${{ matrix.arch }}.zip
+          files: ./build/vlc-macos-${{ matrix.arch }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
