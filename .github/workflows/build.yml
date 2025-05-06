@@ -161,6 +161,7 @@ jobs:
       - name: Build CLI
         shell: docker exec -t builder sh -eu {0}
         run: |
+          export TZ='Etc/UTC' DEBIAN_FRONTEND=noninteractive
           apt update && apt upgrade -y
 
           apt install -y git wget bzip2 file libwine-dev unzip libtool libtool-bin libltdl-dev pkg-config ant \
