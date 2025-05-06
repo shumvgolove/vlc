@@ -189,4 +189,11 @@ jobs:
           zip -r vlc-win-${{ matrix.arch }}.zip vlc-*
           chmod 777 vlc-win-${{ matrix.arch }}.zip
 
-
+      - name: Upload binaries
+        uses: simplex-chat/action-gh-release@v2
+        with:
+          append_body: true
+          fail_on_unmatched_files: true
+          files: ./build/win64/vlc-win-${{ matrix.arch }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
