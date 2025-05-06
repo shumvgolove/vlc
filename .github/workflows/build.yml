@@ -178,7 +178,7 @@ jobs:
 
           update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
 
-          mkdir /project/build *&& cd /project/build
+          mkdir /project/build && cd /project/build
           ../extras/package/win32/build.sh -a x86_64 ||
             ../extras/package/win32/build.sh -a x86_64 ||
             ../extras/package/win32/build.sh -a x86_64
