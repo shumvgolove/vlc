@@ -177,6 +177,7 @@ jobs:
           export PATH=/opt/llvm-mingw-20220906-msvcrt-ubuntu-18.04-x86_64/bin:$PATH
 
           update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+          chmod -R 777 /project && git config --global --add safe.directory '*'
 
           mkdir /project/build && cd /project/build
           ../extras/package/win32/build.sh -a x86_64 ||
