@@ -114,7 +114,7 @@ jobs:
           cd vlc-install
           zip -r vlc-linux-${{ matrix.arch }}.zip *
           mv vlc-linux-${{ matrix.arch }}.zip ../
-          chmod 777 vlc-linux-${{ matrix.arch }}.zip
+          chmod 777 ../vlc-linux-${{ matrix.arch }}.zip
 
       - name: Upload binaries
         uses: simplex-chat/action-gh-release@v2
