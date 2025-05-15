@@ -53,20 +53,76 @@ jobs:
     name: "ubuntu-${{ matrix.os }}"
     needs: maybe-release
     runs-on: ubuntu-${{ matrix.os }}
-    if: false
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: 22.04
+            arch: x86_64
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup swap
-        uses: ./.github/actions/swap
+      - name: Set up Docker Buildx
+        uses: simplex-chat/docker-setup-buildx-action@v3
+
+      # Otherwise we run out of disk space with Docker build
+      - name: Free disk space
+        shell: bash
+        run: ./.github/workflows/linux_util_free_space.sh
+
+      - name: Start container
+        shell: bash
+        run: |
+          docker run -t -d \
+            --device /dev/fuse \
+            --cap-add SYS_ADMIN \
+            --security-opt apparmor:unconfined \
+            --name builder \
+            -v /home/runner/work/_temp:/home/runner/work/_temp \
+            -v ${{ github.workspace }}:/project \
+            ubuntu:latest
+
+      - name: Build CLI
+        shell: docker exec -t builder sh -eu {0}
+        run: |
+          echo "deb-src http://deb.debian.org/debian stable main" >> /etc/apt/sources.list
+          export TZ='Etc/UTC' DEBIAN_FRONTEND=noninteractive
+          apt update && apt upgrade -y
+
+          apt build-dep -y vlc &&
+          apt install -y git curl zip git-core libtool automake autoconf autopoint make \
+                         gettext pkg-config subversion cmake cvs zip bzip2 \
+                         p7zip-full wget dos2unix ragel yasm g++ protobuf-compiler \
+                         m4 ant build-essential libtool-bin libavformat-dev \
+                         libavresample-dev libavutil-dev libpostproc-dev libswscale-dev \
+                         wayland-protocols qtbase5-private-dev libarchive-dev libmpg123-dev \
+                         libnfs-dev libqt5svg5-dev flex bison curl qtdeclarative5-dev \
+                         qtquickcontrols2-5-dev nasm gcovr libxkbcommon-x11-dev meson &&\
+          apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+          chmod -R 777 /project && git config --global --add safe.directory '*'
+
+          cd /project && mkdir vlc-install
+
+          ./bootstrap &&\
+          ./configure --prefix="$PWD/vlc-install" &&\
+          make -j"$(nproc)" &&\
+          make install
+
+          cd vlc-install
+          zip -r vlc-linux-${{ matrix.arch }}.zip *
+          mv vlc-linux-${{ matrix.arch }}.zip ../
+          chmod 777 vlc-linux-${{ matrix.arch }}.zip
+
+      - name: Upload binaries
+        uses: simplex-chat/action-gh-release@v2
         with:
-          swap-size-gb: 30
+          append_body: true
+          fail_on_unmatched_files: true
+          files: ./build/win64/vlc-linux-${{ matrix.arch }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 # =========================
 #        MacOS Build
