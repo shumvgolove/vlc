@@ -90,15 +90,16 @@ jobs:
           export TZ='Etc/UTC' DEBIAN_FRONTEND=noninteractive
           apt update && apt upgrade -y
 
-          apt build-dep -y vlc &&
-          apt install -y git curl zip git-core libtool automake autoconf autopoint make \
+          apt build-dep -y vlc
+          apt install -y git curl zip libtool automake autoconf autopoint make \
                          gettext pkg-config subversion cmake cvs zip bzip2 \
                          p7zip-full wget dos2unix ragel yasm g++ protobuf-compiler \
                          m4 ant build-essential libtool-bin libavformat-dev \
-                         libavresample-dev libavutil-dev libpostproc-dev libswscale-dev \
+                         libswresample-dev libavutil-dev libpostproc-dev libswscale-dev \
                          wayland-protocols qtbase5-private-dev libarchive-dev libmpg123-dev \
                          libnfs-dev libqt5svg5-dev flex bison curl qtdeclarative5-dev \
-                         qtquickcontrols2-5-dev nasm gcovr libxkbcommon-x11-dev meson &&\
+                         qtquickcontrols2-5-dev nasm gcovr libxkbcommon-x11-dev meson || :
+          apt install -y git
           apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
           chmod -R 777 /project && git config --global --add safe.directory '*'
