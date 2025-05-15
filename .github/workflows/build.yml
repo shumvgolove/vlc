@@ -103,13 +103,11 @@ jobs:
 
           mkdir build
           cd build
-          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} ||
-            ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} ||
-            ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }}
+          ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} -i u ||
+            ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} -i u ||
+            ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} -i u
 
-          cp "$(find . -iname 'vlc-cache-gen' -not -path './bin/*')" .
-
-          zip -r "vlc-macos-${{ matrix.arch }}.zip" VLC.app vlc-cache-gen
+          mv vlc-*-release.zip "vlc-macos-${{ matrix.arch }}.zip"
 
       - name: Upload binaries
         uses: simplex-chat/action-gh-release@v2
