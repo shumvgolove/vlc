@@ -180,14 +180,12 @@ jobs:
           chmod -R 777 /project && git config --global --add safe.directory '*'
 
           mkdir /project/build && cd /project/build
-          ../extras/package/win32/build.sh -a x86_64 ||
-            ../extras/package/win32/build.sh -a x86_64 ||
-            ../extras/package/win32/build.sh -a x86_64
+          ../extras/package/win32/build.sh -a x86_64 -l -r -i r ||
+            ../extras/package/win32/build.sh -a x86_64 -l -r -i r ||
+            ../extras/package/win32/build.sh -a x86_64 -l -r -i r || :
 
           cd win64
-          make package-win-common
-
-          zip -r vlc-win-${{ matrix.arch }}.zip vlc-*
+          mv vlc-*-win64.zip vlc-win-${{ matrix.arch }}.zip
           chmod 777 vlc-win-${{ matrix.arch }}.zip
 
       - name: Upload binaries
