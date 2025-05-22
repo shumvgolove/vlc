@@ -94,7 +94,7 @@ jobs:
           apt install -y git curl zip libtool automake autoconf autopoint make \
                          gettext pkg-config subversion cmake cvs zip bzip2 patchelf \
                          p7zip-full wget dos2unix ragel yasm g++ protobuf-compiler \
-                         m4 ant build-essential libtool-bin libavformat-dev \
+                         m4 ant build-essential libtool-bin libavformat-dev fuse fuse3 \
                          libswresample-dev libavutil-dev libpostproc-dev libswscale-dev \
                          wayland-protocols qtbase5-private-dev libarchive-dev libmpg123-dev \
                          libnfs-dev libqt5svg5-dev flex bison curl qtdeclarative5-dev \
@@ -103,45 +103,36 @@ jobs:
 
           chmod -R 777 /project && git config --global --add safe.directory '*'
 
-          cd /project && mkdir vlc-install
+          cd /project
 
           ./bootstrap &&\
-          ./configure --prefix="$PWD/vlc-install" --disable-qt &&\
+          ./configure --prefix="/usr" &&\
           make -j"$(nproc)" &&\
-          make install
+          make -j"$(nproc)" DESTDIR=$(pwd)/build/ install
 
-          cd vlc-install
+          rm /project/build/usr/lib/vlc/plugins/plugins.dat
 
-          find "./bin" -maxdepth 1 -type f | while read -r exe; do
-            echo "Patching rpath in: $exe"
-            patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN' "$exe" || :
-          done
+          find /project/build/usr/lib/vlc/ -maxdepth 1 -name "lib*.so*" -exec patchelf --set-rpath '$ORIGIN/../' {} \;
+          find /project/build/usr/lib/vlc/plugins/ -name "lib*.so*" -exec patchelf --set-rpath '$ORIGIN/../../:$ORIGIN/../../../' {} \;
 
-          find "./lib" -maxdepth 1 -type f | while read -r exe; do
-            echo "Patching rpath in: $exe"
-            patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN' "$exe" || :
-          done
-          
-          find "./lib/vlc" -maxdepth 1 -type f | while read -r exe; do
-            echo "Patching rpath in: $exe"
-            patchelf --set-rpath '$ORIGIN/../../lib:$ORIGIN' "$exe" || :
-          done
-          
-          find "./lib/vlc/plugins" -type f | while read -r exe; do
-            echo "Patching rpath in: $exe"
-            patchelf --set-rpath '$ORIGIN/../../../../lib:$ORIGIN' "$exe" || :
-          done
+          curl -LO 'https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage' &&\
 
-          zip -r vlc-linux-${{ matrix.arch }}.zip *
-          mv vlc-linux-${{ matrix.arch }}.zip ../
-          chmod 777 ../vlc-linux-${{ matrix.arch }}.zip
+          chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+
+          # linuxdeployqt workaround
+          mkdir -p /project/build/usr/share/doc/libc6 &&\
+          touch /project/build/usr/share/doc/libc6/copyright
+
+          ./linuxdeployqt-continuous-x86_64.AppImage /project/build/usr/share/applications/vlc.desktop -appimage -unsupported-allow-new-glibc -bundle-non-qt-libs -exclude-libs=libfreetype.so.6
+
+          mv VLC_media_player-*.AppImage vlc-linux-${{ matrix.arch }}.appimage && chmod 777 vlc-linux-${{ matrix.arch }}.appimage 
 
       - name: Upload binaries
         uses: simplex-chat/action-gh-release@v2
         with:
           append_body: true
           fail_on_unmatched_files: true
-          files: ./vlc-linux-${{ matrix.arch }}.zip
+          files: ./vlc-linux-${{ matrix.arch }}.appimage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
