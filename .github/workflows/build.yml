@@ -175,7 +175,8 @@ jobs:
             ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} -i u ||
             ../extras/package/macosx/build.sh -c -a ${{ matrix.arch }} -i u
 
-          mv vlc-*-release.zip "vlc-macos-${{ matrix.arch }}.zip"
+          unzip -oqq vlc-*-release.zip && cd vlc-*-release
+          zip -r "vlc-macos-${{ matrix.arch }}.zip" . && mv "vlc-macos-${{ matrix.arch }}.zip" ..
 
       - name: Upload binaries
         uses: simplex-chat/action-gh-release@v2
